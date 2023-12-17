@@ -216,12 +216,6 @@ func (h *Handler) buildUpstreamRequest(req *http.Request) (*http.Request, error)
 		return nil, err
 	}
 
-      	amzDateHeader := req.Header["X-Amz-Date"]
-	if len(amzDateHeader) == 0 {
-                log.Debugf("Setting X-Amz-Date header")
-		req.Header.Set("X-Amz-Date", time.Now().Format("20060102T150405Z"))
-	}
-        
 
 	// Get the AWS Signature signer for this AccessKey
 	signer := h.Signers[accessKeyID]
@@ -247,6 +241,12 @@ func (h *Handler) buildUpstreamRequest(req *http.Request) (*http.Request, error)
 	if log.GetLevel() == log.DebugLevel {
 		initialReqDump, _ := httputil.DumpRequest(req, false)
 		log.Debugf("Initial request dump: %v", string(initialReqDump))
+	}
+
+      	amzDateHeader := req.Header["X-Amz-Date"]
+	if len(amzDateHeader) == 0 {
+                log.Debugf("Setting X-Amz-Date header")
+		req.Header.Set("X-Amz-Date", time.Now().Format("20060102T150405Z"))
 	}
 
 	// Assemble a new upstream request
