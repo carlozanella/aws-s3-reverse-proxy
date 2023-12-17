@@ -15,6 +15,7 @@ import (
 
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
 	log "github.com/sirupsen/logrus"
+        httpdate "github.com/Songmu/go-httpdate"
 )
 
 var awsAuthorizationCredentialRegexp = regexp.MustCompile("Credential=([a-zA-Z0-9]+)/[0-9]+/([a-z]+-?[a-z]+-?[0-9]+)/s3/aws4_request")
@@ -216,6 +217,16 @@ func (h *Handler) buildUpstreamRequest(req *http.Request) (*http.Request, error)
 		return nil, err
 	}
 
+      	amzDateHeader := req.Header["X-Amz-Date"]
+	if len(amzDateHeader) == 0 {
+                log.Debugf("Setting X-Amz-Date header")
+                date, err := httpdate.Str2Time(req.Header["Date"][0], nil)
+                if (err != nil) {
+                   return nil, fmt.Errorf("X-Amz-Date missing and cannot parse Date header")
+                }
+                req.Header.Set("X-Amz-Date", date.Format("20060102T150405Z"))
+	}
+
 	if log.GetLevel() == log.DebugLevel {
 		initialReqDump, _ := httputil.DumpRequest(req, false)
 		log.Debugf("Initial request dump: %v", string(initialReqDump))
@@ -241,12 +252,6 @@ func (h *Handler) buildUpstreamRequest(req *http.Request) (*http.Request, error)
 		v, _ = httputil.DumpRequest(req, false)
 		log.Debugf("Incoming request: %v", string(v))
 		return nil, fmt.Errorf("invalid signature in Authorization header")
-	}
-
-      	amzDateHeader := req.Header["X-Amz-Date"]
-	if len(amzDateHeader) == 0 {
-                log.Debugf("Setting X-Amz-Date header")
-		req.Header.Set("X-Amz-Date", time.Now().Format("20060102T150405Z"))
 	}
 
 	// Assemble a new upstream request

@@ -88,6 +88,18 @@ func verifySignature(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func TestDateHeader(t *testing.T) {
+	h := newTestProxy(t)
+
+	req := httptest.NewRequest(http.MethodGet, "http://foobar.example.com", nil)
+	signRequest(req)
+        req.Header.Set("Date", req.Header.Get("X-Amz-Date"))
+        req.Header.Del("X-Amz-Date")
+	resp := httptest.NewRecorder()
+	h.ServeHTTP(resp, req)
+	assert.Equal(t, 200, resp.Code)
+	assert.Contains(t, resp.Body.String(), "Hello, client")
+}
 
 func TestHandlerMissingAuthorization(t *testing.T) {
 	h := newTestProxy(t)
