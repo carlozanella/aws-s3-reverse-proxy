@@ -111,7 +111,7 @@ func (h *Handler) validateIncomingSourceIP(req *http.Request) error {
 
 func (h *Handler) validateIncomingHeaders(req *http.Request) (string, string, error) {
 	amzDateHeader := req.Header["X-Amz-Date"]
-	if len(amzDateHeader) != 1 {
+	if len(amzDateHeader) > 1 {
 		return "", "", fmt.Errorf("X-Amz-Date header missing or set multiple times: %v", req)
 	}
 
@@ -215,6 +215,13 @@ func (h *Handler) buildUpstreamRequest(req *http.Request) (*http.Request, error)
 	if err != nil {
 		return nil, err
 	}
+
+      	amzDateHeader := req.Header["X-Amz-Date"]
+	if len(amzDateHeader) == 0 {
+                log.Debugf("Setting X-Amz-Date header")
+		req.Header.Set("X-Amz-Date", time.Now().Format("20060102T150405Z"))
+	}
+        
 
 	// Get the AWS Signature signer for this AccessKey
 	signer := h.Signers[accessKeyID]
