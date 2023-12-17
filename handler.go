@@ -216,6 +216,11 @@ func (h *Handler) buildUpstreamRequest(req *http.Request) (*http.Request, error)
 		return nil, err
 	}
 
+	if log.GetLevel() == log.DebugLevel {
+		initialReqDump, _ := httputil.DumpRequest(req, false)
+		log.Debugf("Initial request dump: %v", string(initialReqDump))
+	}
+
 
 	// Get the AWS Signature signer for this AccessKey
 	signer := h.Signers[accessKeyID]
@@ -236,11 +241,6 @@ func (h *Handler) buildUpstreamRequest(req *http.Request) (*http.Request, error)
 		v, _ = httputil.DumpRequest(req, false)
 		log.Debugf("Incoming request: %v", string(v))
 		return nil, fmt.Errorf("invalid signature in Authorization header")
-	}
-
-	if log.GetLevel() == log.DebugLevel {
-		initialReqDump, _ := httputil.DumpRequest(req, false)
-		log.Debugf("Initial request dump: %v", string(initialReqDump))
 	}
 
       	amzDateHeader := req.Header["X-Amz-Date"]
